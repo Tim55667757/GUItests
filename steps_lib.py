@@ -28,6 +28,7 @@ import os
 import sys
 import shutil
 from datetime import datetime
+from datetime import timedelta
 import time
 import threading
 import random
@@ -36,13 +37,14 @@ import urllib.request
 import urllib.parse
 import argparse
 import subprocess
+import re
 
 
 # Working Directory.
 workDir = os.path.abspath(os.curdir)
 
 # Full Path to report directory
-resultPath = workDir + '/' + config.testSuiteReportDir
+resultPath = os.path.join(workDir, config.testSuiteReportDir)
 
 # List of test-suite threads with start time. This is dictionaries: {'thread': <thread>, 'sTime': <start_time>}
 threads = []
@@ -51,13 +53,17 @@ threads = []
 browsers = []
 
 # List of dictionaries for test-suite results only. Dict's format:
-# {'thread': <thread>, 'timeStart': <start>, 'timeStop': <stop>, 'duration': <stop-start>, 'testStatus': <status>}
+# {'thread': <thread>,
+#  'timeStart': <start>,
+#  'timeStop': <stop>,
+#  'duration': <stop-start>,
+#  'testStatus': <status>}
 reportTestSuiteData = []
 reportTestCaseData = []
 reportByThreads = []
 
 # List of dictionaries for Exception's statistic by threads. Dict's format:
-# {'all': <num>, 'TimeoutException': <num>, 'NoSuchElementException': <num>}
+# {'total': <num>, 'TimeoutException': <num>, 'NoSuchElementException': <num>}
 reportExceptions = []
 
 
@@ -65,11 +71,11 @@ reportExceptions = []
 try:
     if not (os.path.exists(resultPath)):
         os.mkdir(resultPath)
-    if not (os.path.exists(resultPath + '/logs')):
-        os.mkdir(resultPath + '/logs')
+    if not os.path.exists(os.path.join(resultPath, 'logs')):
+        os.mkdir(os.path.join(resultPath, 'logs'))
     LOGGER = logging.getLogger('Test Logger')
-    LOGGER.setLevel(logging.DEBUG)
-    handler = logging.FileHandler(resultPath + '/' + config.testSuitesLogFile)
+    LOGGER.setLevel(config.loggerInfoLevel)
+    handler = logging.FileHandler(os.path.join(resultPath,  config.testSuitesLogFile))
     formatter = logging.Formatter('%(asctime)s - %(levelname)s: %(message)s')
     handler.setFormatter(formatter)
     LOGGER.addHandler(handler)
@@ -78,12 +84,61 @@ except Exception:
     sys.exit(1)
 
 
+def GetPIDListOfProgramm(name):
+    """
+    Function returns list of numbers of process pids for Selenium browser's drivers.
+    Warning! This function works very slow!
+    """
+    pids = []
+    try:
+        tasklist = subprocess.Popen(['tasklist'], stdout=subprocess.PIPE)
+        (stdout, stderr) = tasklist.communicate()
+        for process in stdout.decode('cp866').split('\n'):
+            if name in process:
+                nums = re.findall("(?! )\d+(?!= )", process)
+                if nums:
+                    pids.append(nums[0])
+    except Exception:
+        traceback.print_exc()
+    finally:
+        pids = sorted(sorted(pids), key=lambda x: len(x))
+        for i in range(len(pids)):
+            pids[i] = int(pids[i])
+        return pids
+
+
+def KillProcess(pid):
+    """
+    This function stops process with given pid.
+    """
+    statusCode = 0
+    try:
+        if pid >= 0:
+            cmd = "taskkill /F /T /PID {0} > NUL 2>&1".format(pid)
+            os.system(cmd)
+            LOGGER.debug('Process killed: ' + str(pid))
+        else:
+            raise Exception('Error! Process %d does not stop!' % pid)
+    except Exception:
+        LOGGER.exception('Python exception: ')
+        statusCode = 1
+    finally:
+        return statusCode
+
+
 def Cleaner():
     """
     This function use for finalization operations of test.
     """
-    print('Parse default log-file to separate files by threads...')
-    LoggerParserByThreads(resultPath + '/' + config.testSuitesLogFile, config.testSuiteThreads)
+    LOGGER.debug('Cleaner working...')
+    chromePIDs = GetPIDListOfProgramm('chromedriver.exe')
+    for pid in chromePIDs:
+        KillProcess(pid)
+    iePIDs = GetPIDListOfProgramm('IEDriverServer.exe')
+    for pid in iePIDs:
+        KillProcess(pid)
+    LoggerParserByThreads(os.path.join(resultPath, config.testSuitesLogFile), config.testSuiteThreads)
+    LOGGER.info('Cleaner finished work. All test-process stoped.')
 
 
 def StringOfNumToNumsList(string):
@@ -108,6 +163,7 @@ def StringOfNumToNumsList(string):
             string = string[i + 1:]
     except:
         print('Can\'t parse your string of numbers to list of numbers!')
+        LOGGER.exception('Python exception: ')
         return []
     return numList
 
@@ -119,10 +175,10 @@ def LoggerParserByThreads(summaryLogFile, threadsNum=1):
     if os.path.exists(summaryLogFile):
         for t in range(threadsNum):
             try:
-                logFile = resultPath + '/logs/' + datetime.now().strftime('%d_%m_%Y_%H_%M_%S_') + 'Thread_' + str(t)
+                logFile = os.path.join(resultPath, 'logs', datetime.now().strftime('%d_%m_%Y_%H_%M_%S_') + 'Thread_' + str(t))
                 if not (os.path.exists(logFile)):
                     os.mkdir(logFile)
-                logFile = logFile + '/Thread_' + str(t)
+                logFile = os.path.join(logFile, 'Thread_' + str(t))
                 if len(reportByThreads) > 0:
                     FormattingReportOutputForCasesByThreadsToCSV(logFile + '_summary.csv', t)
                 logFile = logFile + '_all_logs.txt'
@@ -134,6 +190,7 @@ def LoggerParserByThreads(summaryLogFile, threadsNum=1):
                                 parseString = s
                                 fileTo.write(parseString)
             except Exception:
+                LOGGER.exception('Python exception: ')
                 print('Can\'t parse summary report file %s' % summaryLogFile)
                 return 1
     return 0
@@ -149,7 +206,7 @@ def FormattingReportOutputForCasesByThreadsToCSV(pathToCaseSummary, threadNum):
         else:
             file = open(pathToCaseSummary, 'w', encoding='utf-8')
             file.writelines(
-                'Thread;timeStart;timeStop;duration;testStatus;all_exceptions;TimeoutException;NoSuchElementException\n')
+                'Thread;timeStart;timeStop;duration;testStatus;total_exceptions;TimeoutException;NoSuchElementException\n')
         for data in reportByThreads:
             if (data['testStatus'] == 0) or (data['testStatus'] == 'PASS'):
                 data['testStatus'] = 'PASS'
@@ -158,7 +215,7 @@ def FormattingReportOutputForCasesByThreadsToCSV(pathToCaseSummary, threadNum):
         for data in reportByThreads:
             if data['thread'] == threadNum:
                 file.writelines('%(thread)d;%(timeStart)s;%(timeStop)s;%(duration)s;%(testStatus)s;' % data +
-                                '%(all)d;%(TimeoutException)d;%(NoSuchElementException)d\n' %
+                                '%(total)d;%(TimeoutException)d;%(NoSuchElementException)d\n' %
                                 reportExceptions[threadNum])
         file.close()
     except Exception:
@@ -188,10 +245,11 @@ def ParseArgs():
     args = parser.parse_args()
     if args.cases != None:
         config.testSuitesCaseSequence = StringOfNumToNumsList(args.cases)
-    if args.flagToRepeat == 'True':
-        config.repeatCaseSequence = True
-    else:
-        config.repeatCaseSequence = False
+    if args.flagToRepeat:
+        if args.flagToRepeat == 'True':
+            config.repeatCaseSequence = True
+        else:
+            config.repeatCaseSequence = False
     if args.browser != None:
         config.selBrowserString = args.browser
     if args.threads != None:
@@ -221,7 +279,7 @@ def FormatTimeString(timeAndDate):
     """
     Function gets time and date and converts it into Project's log format string
     """
-    return timeAndDate.strftime('%H:%M:%S %d.%m.%Y')
+    return timeAndDate.strftime('%Y-%m-%d %H:%M:%S')
 
 
 def RndTextString(length=5):
@@ -249,6 +307,8 @@ def FormattingReportOutput(fullPath):
         file.write('    - project\'s URL: %s\n' % str(config.URL))
         file.write('    - browser string: %s\n' % config.selBrowserString)
         file.write('    - operation\'s timeout (sec.): %s\n' % str(config.testSuiteOpTimeout))
+        file.write('    - repeat case sequence: %s\n' % str(config.repeatCaseSequence))
+        file.write('    - time to stop stress test (sec.): %s\n' % str(config.timeToStopTests))
         file.write('    - threads of test suite: %s\n' % str(config.testSuiteThreads))
         file.write('    - rump up period (sec.): %s\n' % str(config.testSuiteRumpUp))
         file.write('    - take screens on error: %s\n' % str(config.takeScreensOnError))
@@ -265,7 +325,7 @@ def FormattingReportOutput(fullPath):
                             '    last duration: %(duration)s\n' % data +
                             '    last testStatus: %(testStatus)s\n' % data +
                             '    Summary exception\'s statistic for thread #%d:\n' % t +
-                            '        all: %(all)d\n' % reportExceptions[t] +
+                            '        total errors: %(total)d\n' % reportExceptions[t] +
                             '        TimeoutException: %(TimeoutException)d\n' % reportExceptions[t] +
                             '        NoSuchElementException: %(NoSuchElementException)d\n' % reportExceptions[t])
             t += 1
@@ -282,32 +342,34 @@ def GetScreen(nameOfScreen='', instance=0):
     Function gets screenshot from browser and put it into png-file to the <date_time>_thread## dir format.
     """
     try:
-        page = browsers[instance]
-        screenDir = resultPath + "/" + config.testSuiteScreensDir
-        if not (os.path.exists(screenDir)):
-            os.mkdir(screenDir)
-        screenDir = screenDir + '/' + threads[instance]['sTime'].strftime('%d_%m_%Y_%H_%M_%S_') + 'Thread_' + str(
-            instance)
-        if not (os.path.exists(screenDir)):
-            os.mkdir(screenDir)
-        screenFile = screenDir + '/' + datetime.now().strftime('%d_%m_%Y_%H_%M_%S_') + nameOfScreen
-        if screenFile[-4:] != '.png':
-            screenFile = screenFile + '.png'
-        page.get_screenshot_as_file(screenFile)
-        LOGGER.info('Thread #%s, Screenshot created: %s' % (str(instance), screenFile))
+        if instance > 0 and instance < len(browsers):
+            page = browsers[instance]
+            screenDir = os.path.join(resultPath, config.testSuiteScreensDir)
+            if not (os.path.exists(screenDir)):
+                os.mkdir(screenDir)
+            screenDir = os.path.join(screenDir, threads[instance]['sTime'].strftime('%d_%m_%Y_%H_%M_%S_') + 'Thread_%d' % instance)
+            if not (os.path.exists(screenDir)):
+                os.mkdir(screenDir)
+            screenFile = os.path.join(screenDir, datetime.now().strftime('%d_%m_%Y_%H_%M_%S_') + nameOfScreen)
+            if screenFile[-4:] != '.png':
+                screenFile = screenFile + '.png'
+            page.get_screenshot_as_file(screenFile)
+            LOGGER.info('Thread #%d, Screenshot created: %s' % (instance, screenFile))
+        else:
+            raise Exception('GetScreen error: instance = %d, len(browsers) = %s, but browser was closed earlier.' % (instance, str(len(browsers))))
         return 0
     except exceptions.TimeoutException:
-        reportExceptions[instance]['all'] += 1
+        reportExceptions[instance]['total'] += 1
         reportExceptions[instance]['TimeoutException'] += 1
         return 1
     except exceptions.NoSuchElementException:
-        reportExceptions[instance]['all'] += 1
+        reportExceptions[instance]['total'] += 1
         reportExceptions[instance]['NoSuchElementException'] += 1
         return 1
     except Exception:
-        reportExceptions[instance]['all'] += 1
-        LOGGER.error('Thread #%s, Can not create screenshot-file!' % str(instance))
-        LOGGER.exception('Thread #%s, Python exception: ' % str(instance))
+        reportExceptions[instance]['total'] += 1
+        LOGGER.error('Thread #%d, Can not create screenshot-file!' % instance)
+        LOGGER.exception('Thread #%d, Python exception: ' % instance)
         return 1
 
 
@@ -315,43 +377,44 @@ def OpenBrowser(opTimeout=10, browserString='*firefox', ffProfile=None, instance
     """
     Commands for opening WebDriver browser.
     """
+    currentFuncName = sys._getframe().f_code.co_name  # get current function name for message templates
     try:
         startTime = datetime.now()
-        LOGGER.info('Thread #%s, command: OpenBrowser, start time: %s' % (str(instance), FormatTimeString(startTime)))
+        LOGGER.info('Thread #%d, command: %s, start time: %s' % (instance, currentFuncName, FormatTimeString(startTime)))
         # Get new browser instance and put it into browsers array. One browser for one thread.
         if browserString == '*chrome':
             chromeOptions = webdriver.ChromeOptions()
             chromeOptions.add_argument('--start-maximized')
-            chromeOptions.add_argument('--log-path=' + workDir + '/browser_drivers/chromedriver.log')
-            os.chdir(workDir + '/browser_drivers')
-            browsers.append(webdriver.Chrome(executable_path=workDir + '/browser_drivers/chromedriver.exe',
+            chromeOptions.add_argument('--log-path=' + os.path.join(workDir, 'browser_drivers', 'chromedriver.log'))
+            os.chdir(os.path.join(workDir, 'browser_drivers'))
+            browsers.append(webdriver.Chrome(executable_path=os.path.join(workDir, 'browser_drivers', 'chromedriver.exe'),
                                              chrome_options=chromeOptions))
             os.chdir(workDir)
         elif browserString == '*ie':
-            browsers.append(webdriver.Ie(executable_path=workDir + '/browser_drivers/IEDriverServer.exe',
-                                         log_file=workDir + '/browser_drivers/iedriver.log'))
+            browsers.append(webdriver.Ie(executable_path=os.path.join(workDir, 'browser_drivers', 'IEDriverServer.exe'),
+                                         log_file=os.path.join(workDir, 'browser_drivers', 'iedriver.log')))
         else:
             ffp = webdriver.FirefoxProfile(ffProfile)
             browsers.append(webdriver.Firefox(firefox_profile=ffp, timeout=opTimeout))
             browsers[instance].maximize_window()
         finishTime = datetime.now()
-        LOGGER.info('Thread #%s, command: OpenBrowser, finish time: %s' % (str(instance), FormatTimeString(finishTime)))
-        LOGGER.info('Thread #%s, command: OpenBrowser, duration: %s' % (str(instance), str(finishTime - startTime)))
-        LOGGER.info('Thread #%s, command: OpenBrowser, status: oK' % str(instance))
+        LOGGER.info('Thread #%d, command: %s, finish time: %s' % (instance, currentFuncName, FormatTimeString(finishTime)))
+        LOGGER.info('Thread #%d, command: %s, duration: %s' % (instance, currentFuncName, str(finishTime - startTime)))
+        LOGGER.info('Thread #%d, command: %s, status: oK' % (instance, currentFuncName))
         if config.takeScreensOnSteps:
-            GetScreen('Thread_%s_command_OpenBrowser_status_oK' % str(instance), instance)
+            GetScreen('Thread_%d_command_%s_status_oK' % (instance, currentFuncName), instance)
         return 0
     except exceptions.TimeoutException:
-        reportExceptions[instance]['all'] += 1
+        reportExceptions[instance]['total'] += 1
         reportExceptions[instance]['TimeoutException'] += 1
         return 1
     except exceptions.NoSuchElementException:
-        reportExceptions[instance]['all'] += 1
+        reportExceptions[instance]['total'] += 1
         reportExceptions[instance]['NoSuchElementException'] += 1
         return 1
     except Exception:
-        reportExceptions[instance]['all'] += 1
-        LOGGER.error('Thread #%s, command: OpenBrowser, status: error' % str(instance))
+        reportExceptions[instance]['total'] += 1
+        LOGGER.error('Thread #%d, command: %s, status: error' % (instance, currentFuncName))
         LOGGER.exception('Python exception: ')
         return 1
 
@@ -360,11 +423,12 @@ def OpenProjectAndLogin(projectURL, login, password, opTimeout=10, browserString
     """
     Commands for opening project's URL and try to login.
     """
+    currentFuncName = sys._getframe().f_code.co_name  # get current function name for message templates
     try:
         page = browsers[instance]
-        LOGGER.info('Thread #%s, command: OpenProjectAndLogin - go to project\'s URL: %s' % (str(instance), projectURL))
+        LOGGER.info('Thread #%d, command: %s - go to project\'s URL: %s' % (instance, currentFuncName, projectURL))
         startTime = datetime.now()
-        LOGGER.info('Thread #%s, command: OpenProjectAndLogin, start time: %s' % (str(instance), FormatTimeString(startTime)))
+        LOGGER.info('Thread #%d, command: %s, start time: %s' % (instance, currentFuncName, FormatTimeString(startTime)))
         page.get(projectURL)
         try:
             # Wait main page:
@@ -376,28 +440,28 @@ def OpenProjectAndLogin(projectURL, login, password, opTimeout=10, browserString
                 page.find_element_by_xpath("//input[@id='password']").send_keys(password)
             page.find_element_by_xpath("//*[@type='submit']").click()
         except:
-            LOGGER.info('Thread #%s, command: OpenProjectAndLogin, probably you are log in already.' % str(instance))
+            LOGGER.info('Thread #%d, command: %s, probably you are log in already.' % (instance, currentFuncName))
         finishTime = datetime.now()
-        LOGGER.info('Thread #%s, command: OpenProjectAndLogin, finish time: %s' % (str(instance), FormatTimeString(finishTime)))
-        LOGGER.info('Thread #%s, command: OpenProjectAndLogin, duration: %s' % (str(instance), str(finishTime - startTime)))
-        LOGGER.info('Thread #%s, command: OpenProjectAndLogin, status: oK' % str(instance))
+        LOGGER.info('Thread #%d, command: %s, finish time: %s' % (instance, currentFuncName, FormatTimeString(finishTime)))
+        LOGGER.info('Thread #%d, command: %s, duration: %s' % (instance, currentFuncName, str(finishTime - startTime)))
+        LOGGER.info('Thread #%d, command: %s, status: oK' % (instance, currentFuncName))
         if config.takeScreensOnSteps:
-            GetScreen('Thread_%s_command_OpenProjectAndLogin_status_oK' % str(instance), instance)
+            GetScreen('Thread_%d_command_%s_status_oK' % (instance, currentFuncName), instance)
         return 0
     except exceptions.TimeoutException:
-        reportExceptions[instance]['all'] += 1
+        reportExceptions[instance]['total'] += 1
         reportExceptions[instance]['TimeoutException'] += 1
         return 1
     except exceptions.NoSuchElementException:
-        reportExceptions[instance]['all'] += 1
+        reportExceptions[instance]['total'] += 1
         reportExceptions[instance]['NoSuchElementException'] += 1
         return 1
     except Exception:
-        reportExceptions[instance]['all'] += 1
-        LOGGER.error('Thread #%s, command: OpenProjectAndLogin, status: error' % str(instance))
+        reportExceptions[instance]['total'] += 1
+        LOGGER.error('Thread #%d, command: %s, status: error' % (instance, currentFuncName))
         LOGGER.exception('Python exception: ')
         if config.takeScreensOnError:
-            GetScreen('Thread_%s_command_OpenProjectAndLogin_status_error' % str(instance), instance)
+            GetScreen('Thread_%d_command_%s_status_error' % (instance, currentFuncName), instance)
         return 1
 
 
@@ -405,35 +469,36 @@ def CloseBrowser(instance=0):
     """
     Try to close WebDriver browser.
     """
+    currentFuncName = sys._getframe().f_code.co_name  # get current function name for message templates
     if (len(browsers) > 0) and (browsers[instance] != None):
         try:
             page = browsers[instance]
             startTime = datetime.now()
-            LOGGER.info('Thread #%s, command: CloseBrowser, start time: %s' % (str(instance), FormatTimeString(startTime)))
-            LOGGER.info('Thread #%s, command: CloseBrowser' % str(instance))
+            LOGGER.info('Thread #%d, command: %s, start time: %s' % (instance, currentFuncName, FormatTimeString(startTime)))
+            LOGGER.info('Thread #%d, command: %s' % (instance, currentFuncName))
             if config.takeScreensOnSteps:
-                GetScreen('Thread_%s_command_CloseBrowser_status_oK' % str(instance), instance)
+                GetScreen('Thread_%d_command_%s_status_oK' % (instance, currentFuncName), instance)
             page.close()
             browsers[instance] = None
-            LOGGER.info('Thread #%s, command: CloseBrowser, status: oK' % str(instance))
+            LOGGER.info('Thread #%d, command: %s, status: oK' % (instance, currentFuncName))
         except exceptions.TimeoutException:
-            reportExceptions[instance]['all'] += 1
+            reportExceptions[instance]['total'] += 1
             reportExceptions[instance]['TimeoutException'] += 1
             if config.takeScreensOnError:
-                GetScreen('Thread_%s_command_CloseBrowser_status_error' % str(instance), instance)
+                GetScreen('Thread_%d_command_%s_status_error' % (instance, currentFuncName), instance)
             return 1
         except exceptions.NoSuchElementException:
-            reportExceptions[instance]['all'] += 1
+            reportExceptions[instance]['total'] += 1
             reportExceptions[instance]['NoSuchElementException'] += 1
             if config.takeScreensOnError:
-                GetScreen('Thread_%s_command_CloseBrowser_status_error' % str(instance), instance)
+                GetScreen('Thread_%d_command_%s_status_error' % (instance, currentFuncName), instance)
             return 1
         except Exception:
-            reportExceptions[instance]['all'] += 1
-            LOGGER.error('Thread #%s, command: CloseBrowser, status: error' % str(instance))
+            reportExceptions[instance]['total'] += 1
+            LOGGER.error('Thread #%d, command: %s, status: error' % (instance, currentFuncName))
             LOGGER.exception('Python exception: ')
             if config.takeScreensOnError:
-                GetScreen('Thread_%s_command_CloseBrowser_status_error' % str(instance), instance)
+                GetScreen('Thread_%d_command_%s_status_error' % (instance, currentFuncName), instance)
             return 1
     return 0
 
@@ -442,35 +507,36 @@ def VerifyMainPageContainsSomeElements(opTimeout=10, instance=0):
     """
     Verify that some elements presents on page.
     """
+    currentFuncName = sys._getframe().f_code.co_name  # get current function name for message templates
     try:
         page = browsers[instance]
         startTime = datetime.now()
-        LOGGER.info('Thread #%s, command: VerifyMainPageContainsSomeElements, start time: %s' % (str(instance), FormatTimeString(startTime)))
+        LOGGER.info('Thread #%d, command: %s, start time: %s' % (instance, currentFuncName, FormatTimeString(startTime)))
         # If we can't find elements it will be exception and we'll see it in log-file:
         page.find_element_by_xpath("//input[@type='text']")
         page.find_element_by_xpath("//span[contains(text(), 'Поиск в Google')]")
         page.find_element_by_xpath("//span[contains(text(), 'Мне повезёт!')]")
         if config.takeScreensOnSteps:
-            GetScreen('Thread_%s_command_VerifyMainPageContainsSomeElements_status_oK' % str(instance), instance)
+            GetScreen('Thread_%d_command_%s_status_oK' % (instance, currentFuncName), instance)
         return 0
     except exceptions.TimeoutException:
-        reportExceptions[instance]['all'] += 1
+        reportExceptions[instance]['total'] += 1
         reportExceptions[instance]['TimeoutException'] += 1
         if config.takeScreensOnError:
-            GetScreen('Thread_%s_command_VerifyMainPageContainsSomeElements_status_error' % str(instance), instance)
+            GetScreen('Thread_%d_command_%s_status_error' % (instance, currentFuncName), instance)
         return 1
     except exceptions.NoSuchElementException:
-        reportExceptions[instance]['all'] += 1
+        reportExceptions[instance]['total'] += 1
         reportExceptions[instance]['NoSuchElementException'] += 1
         if config.takeScreensOnError:
-            GetScreen('Thread_%s_command_VerifyMainPageContainsSomeElements_status_error' % str(instance), instance)
+            GetScreen('Thread_%d_command_%s_status_error' % (instance, currentFuncName), instance)
         return 1
     except Exception:
-        reportExceptions[instance]['all'] += 1
-        LOGGER.error('Thread #%s, command: VerifyMainPageContainsSomeElements, status: error' % str(instance))
+        reportExceptions[instance]['total'] += 1
+        LOGGER.error('Thread #%d, command: %s, status: error' % (instance, currentFuncName))
         LOGGER.exception('Python exception: ')
         if config.takeScreensOnError:
-            GetScreen('Thread_%s_command_VerifyMainPageContainsSomeElements_status_error' % str(instance), instance)
+            GetScreen('Thread_%d_command_%s_status_error' % (instance, currentFuncName), instance)
         return 1
 
 
@@ -478,43 +544,44 @@ def CheckSearchPage(opTimeout=10, instance=0):
     """
     Going to menu path: Administrating - Setting up synchronization.
     """
+    currentFuncName = sys._getframe().f_code.co_name  # get current function name for message templates
     try:
         page = browsers[instance]
         startTime = datetime.now()
-        LOGGER.info('Thread #%s, command: CheckSearchPage, start time: %s' % (str(instance), FormatTimeString(startTime)))
+        LOGGER.info('Thread #%d, command: %s, start time: %s' % (instance, currentFuncName, FormatTimeString(startTime)))
         page.find_element_by_xpath("//input[@type='text']").send_keys('Test search')
         page.find_element_by_xpath("(//button[@aria-label='Поиск в Google'])[1]").click()
         WebDriverWait(page, opTimeout).until(
             lambda el: el.find_element_by_xpath("(//div[@id='res']/..//a)[1]").is_displayed(),
             'Timeout while we are wait result page.')
         finishTime = datetime.now()
-        LOGGER.info('Thread #%s, command: CheckSearchPage, finish time: %s' % (str(instance), FormatTimeString(finishTime)))
-        LOGGER.info('Thread #%s, command: CheckSearchPage, duration: %s' % (str(instance), str(finishTime - startTime)))
-        LOGGER.info('Thread #%s, command: CheckSearchPage, status: oK' % str(instance))
+        LOGGER.info('Thread #%d, command: %s, finish time: %s' % (instance, currentFuncName, FormatTimeString(finishTime)))
+        LOGGER.info('Thread #%d, command: %s, duration: %s' % (instance, currentFuncName, str(finishTime - startTime)))
+        LOGGER.info('Thread #%d, command: %s, status: oK' % (instance, currentFuncName))
         if config.takeScreensOnSteps:
-            GetScreen('Thread_%s_command_CheckSearchPage_status_oK' % str(instance), instance)
+            GetScreen('Thread_%d_command_%s_status_oK' % (instance, currentFuncName), instance)
         return 0
     except exceptions.TimeoutException:
-        reportExceptions[instance]['all'] += 1
+        reportExceptions[instance]['total'] += 1
         reportExceptions[instance]['TimeoutException'] += 1
         if config.takeScreensOnError:
-            GetScreen('Thread_%s_command_CheckSearchPage_status_error' % str(instance), instance)
+            GetScreen('Thread_%d_command_%s_status_error' % (instance, currentFuncName), instance)
         return 1
     except exceptions.NoSuchElementException:
-        reportExceptions[instance]['all'] += 1
+        reportExceptions[instance]['total'] += 1
         reportExceptions[instance]['NoSuchElementException'] += 1
         if config.takeScreensOnError:
-            GetScreen('Thread_%s_command_CheckSearchPage_status_error' % str(instance), instance)
+            GetScreen('Thread_%d_command_%s_status_error' % (instance, currentFuncName), instance)
         return 1
     except Exception:
-        reportExceptions[instance]['all'] += 1
-        LOGGER.error('Thread #%s, command: CheckSearchPage, status: error' % str(instance))
+        reportExceptions[instance]['total'] += 1
+        LOGGER.error('Thread #%d, command: %s, status: error' % (instance, currentFuncName))
         LOGGER.exception('Python exception: ')
         if config.takeScreensOnError:
-            GetScreen('Thread_%s_command_CheckSearchPage_status_error' % str(instance), instance)
+            GetScreen('Thread_%d_command_%s_status_error' % (instance, currentFuncName), instance)
         return 1
 
 
-# This file used as library of steps only
+# This file used as library of steps only! Not for run!
 if __name__ == '__main__':
     pass

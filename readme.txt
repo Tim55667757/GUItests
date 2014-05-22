@@ -14,8 +14,8 @@
 -a      --takeAllScr    Укажите '-a False' если вы хотите делать скриншоты при любых операциях.
 -s      --sortThreads   Укажите '-s <log-file>' для сортировки некоторого лог-файла по тредам.
 
-Если ключи не указаны, используются настройки по  умолчанию из файла config.py. Ключи, указанные при запуске в консоли
-имеют больший приоритет, чем настройки по умолчанию из config.py!
+Если ключи не указаны, используются настройки по  умолчанию из файла config.py.
+Ключи, указанные при запуске в консоли имеют больший приоритет, чем настройки по умолчанию из config.py!
 
 Находясь в корне проекта для запуска тестов можно использовать следующие команды.
 
@@ -38,11 +38,11 @@ python tester.py [options]
 
 Для запуска только одного тестового набора в один поток с указанными в config.py настройками по умолчанию:
 
-python gui_test_suites.py
+python test_suites.py
 
 Для запуска только одного тест-кейса в один поток с указанными в config.py настройками по умолчанию:
 
-python tests/test_case_1_Init_test.py
+python tests/test_case_1_Scenario.py
 
 
 Для отладки конкретного тест-кейса нужно ставить рабочей директорией корень проекта (каталог GUItests).
@@ -54,7 +54,7 @@ python tests/test_case_1_Init_test.py
 
 GUItests - корень проекта.
     /tests - пакет, в которых хранятся отдельные тест-кейсы.
-        test_case_1_Init_test.py - пример одного тест-кейса, составленный из отдельных шагов.
+        test_case_1_Scenario.py - пример одного тест-кейса, составленный из отдельных шагов.
     /ff_profile - каталог с необходимым профилем для mozilla.
     /reports - каталог с логами и всеми результатами, как для случая запуска всех тест-сьютов через tester.py,
            так и в случае запуска отдельного тест-сьюта или тест-кейса.
@@ -65,8 +65,8 @@ GUItests - корень проекта.
     config.py - сюда выносятся все глобальные настройки для тестов, каждый параметр прокомментирован.
     steps_Lib.py - библиотека отдельных логических шагов для тестов и вспомогательных функций.
                    Каждый шаг может состоять из нескольких действий. Тест-кейсы сюда не вносятся!
-    gui_Test_suite.py - здесь описывается структура тест-сьюта, который управляет запуском
-                        набора тест-кейсов. Каждый тест-кейс описан в отдельном файле.
+    test_suite.py - здесь описывается структура тест-сьюта, который управляет запуском
+                    набора тест-кейсов. Каждый тест-кейс описан в отдельном файле.
     tester.py - скрипт для многопоточного запуска указанных тест-сьютов с настройками из config.py.
                 По аналогии можно добавить запуск других классов тест-сьютов.
 
@@ -78,41 +78,42 @@ def NameOfFunctionStep(opTimeout=10, instance=0):
     """
     Description.
     """
+    currentFuncName = sys._getframe().f_code.co_name  # get current function name for message templates
     try:
         # Initialization steps for function:
         page = browsers[instance]
         startTime = datetime.now()
-        LOGGER.info('Thread #%s, command: NameOfFunctionStep, start time: %s' %
-                    (str(instance), FormatTimeString(startTime)))
+        LOGGER.info('Thread #%d, command: %s, start time: %s' %
+                    (instance, currentFuncName, FormatTimeString(startTime)))
 
         # Insert your steps and actions here.
 
         # Finalization steps for function:
         finishTime = datetime.now()
-        LOGGER.info('Thread #%s, command: NameOfFunctionStep, finish time: %s' %
-                    (str(instance), FormatTimeString(finishTime)))
-        LOGGER.info('Thread #%s, command: NameOfFunctionStep, duration: %s' %
-                    (str(instance), str(finishTime - startTime)))
-        LOGGER.info('Thread #%s, command: NameOfFunctionStep, status: oK' % str(instance))
+        LOGGER.info('Thread #%d, command: %s, finish time: %s' %
+                    (instance, currentFuncName, FormatTimeString(finishTime)))
+        LOGGER.info('Thread #%d, command: %s, duration: %s' %
+                    (instance, currentFuncName, str(finishTime - startTime)))
+        LOGGER.info('Thread #%d, command: %s, status: oK' % (instance, currentFuncName))
         if config.takeScreensOnSteps:
-            GetScreen('Thread_%s_command_NameOfFunctionStep_status_oK' % str(instance), instance)
+            GetScreen('Thread_%d_command_%s_status_oK' % (instance, currentFuncName), instance)
         return 0
     except exceptions.TimeoutException:
-        reportExceptions[instance]['all'] += 1
+        reportExceptions[instance]['total'] += 1
         reportExceptions[instance]['TimeoutException'] += 1
         if config.takeScreensOnError:
-            GetScreen('Thread_%s_command_NameOfFunctionStep_status_error' % str(instance), instance)
+            GetScreen('Thread_%d_command_%s_status_error' % (instance, currentFuncName), instance)
         return 1
     except exceptions.NoSuchElementException:
-        reportExceptions[instance]['all'] += 1
+        reportExceptions[instance]['total'] += 1
         reportExceptions[instance]['NoSuchElementException'] += 1
         if config.takeScreensOnError:
-            GetScreen('Thread_%s_command_NameOfFunctionStep_status_error' % str(instance), instance)
+            GetScreen('Thread_%d_command_%s_status_error' % (instance, currentFuncName), instance)
         return 1
     except Exception:
-        reportExceptions[instance]['all'] += 1
-        LOGGER.error('Thread #%s, command: NameOfFunctionStep, status: error' % str(instance))
+        reportExceptions[instance]['total'] += 1
+        LOGGER.error('Thread #%d, command: %s, status: error' % (instance, currentFuncName))
         LOGGER.exception('Python exception: ')
         if config.takeScreensOnError:
-            GetScreen('Thread_%s_command_NameOfFunctionStep_status_error' % str(instance), instance)
+            GetScreen('Thread_%d_command_%s_status_error' % (instance, currentFuncName), instance)
         return 1

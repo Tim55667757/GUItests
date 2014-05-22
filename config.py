@@ -12,23 +12,26 @@ URL = 'https://google.ru'
 suiteLogin = ''
 suitePassword = ''
 
-# Test-case sequence for main test-suite. Specified tests should exist.
-testSuitesCaseSequence = [1, 2, 1, 2]
+# Test-case sequence for main test-suite. Specified tests should be exist!
+testSuitesCaseSequence = [1, 2]
 
 # Flag to repeat sequence of test-cases. True if you want repeat sequence, False in another case.
 repeatCaseSequence = False
 
 # How many threads of test suites do you need?
-testSuiteThreads = 3
+testSuiteThreads = 2
 
 # Rump up period shows time (sec.) in which all test suite threads will start:
-testSuiteRumpUp = 6
+testSuiteRumpUp = 3
 
-# Operation's timeout in seconds:
-testSuiteOpTimeout = 10
+# Time in seconds to finish stress tests, after all virtual users up, number <= 0 to infinite loop:
+timeToStopTests = 1 * 60
+
+# Operation's timeout in seconds for difficult operations:
+testSuiteOpTimeout = 5
 
 # Selenium Browser string. This param shows Selenium WebDriver which browser to run: *firefox, *chrome, *ie
-selBrowserString = '*firefox'
+selBrowserString = '*chrome'
 
 # Mozilla profile. This param used only for ff. This is relative path to dir with mozilla profile config.
 selFFProfile = 'ff_profile'
@@ -41,6 +44,9 @@ testSuiteScreensDir = 'screens'
 
 # Name of log-file for all test-suites.
 testSuitesLogFile = 'Test_suites_Log.txt'
+
+# Info level for logger: CRITICAL = 50, ERROR = 40, WARNING = 30, INFO = 20, DEBUG = 10, NOTSET = 0
+loggerInfoLevel = 10
 
 # Name of summary file with report for suite.
 testSuiteSummaryFile = 'Test_suite_Summary.txt'
