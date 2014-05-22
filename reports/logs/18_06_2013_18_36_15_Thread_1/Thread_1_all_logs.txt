@@ -1,0 +1,78 @@
+2013-06-18 18:36:07,450 - INFO: Thread #1, trying to init next instance of test-suite.
+2013-06-18 18:36:07,450 - INFO: Thread #1, new instance of test-suite add to thread list - oK
+2013-06-18 18:36:07,450 - INFO: Thread #1, trying to start test-suite in this thread.
+2013-06-18 18:36:07,450 - INFO: Thread #1, --- Start test-suite ---
+2013-06-18 18:36:07,450 - INFO: Thread #1, test-suite in thread started - oK
+2013-06-18 18:36:07,450 - INFO: Thread #1, test-suite start time: 18:36:07 18.06.2013
+2013-06-18 18:36:07,450 - INFO: Thread #1, command: OpenBrowser, start time: 18:36:07 18.06.2013
+2013-06-18 18:36:08,723 - INFO: Thread #1, command: OpenBrowser, finish time: 18:36:08 18.06.2013
+2013-06-18 18:36:08,724 - INFO: Thread #1, command: OpenBrowser, duration: 0:00:01.273000
+2013-06-18 18:36:08,724 - INFO: Thread #1, command: OpenBrowser, status: oK
+2013-06-18 18:36:08,813 - INFO: Thread #1, Screenshot created: c:\work\projects\_backup\GUItests/reports/screens/18_06_2013_18_36_07_Thread_1/18_06_2013_18_36_08_Thread_1_command_OpenBrowser_status_oK.png
+2013-06-18 18:36:08,815 - INFO: Thread #1, TestCase1, start time: 18:36:08 18.06.2013
+2013-06-18 18:36:08,815 - INFO: Thread #1, command: OpenProjectAndLogin - go to project's URL: https://google.ru
+2013-06-18 18:36:08,815 - INFO: Thread #1, command: OpenProjectAndLogin, start time: 18:36:08 18.06.2013
+2013-06-18 18:36:09,737 - INFO: Thread #1, command: OpenProjectAndLogin, probably you are log in already.
+2013-06-18 18:36:09,737 - INFO: Thread #1, command: OpenProjectAndLogin, finish time: 18:36:09 18.06.2013
+2013-06-18 18:36:09,737 - INFO: Thread #1, command: OpenProjectAndLogin, duration: 0:00:00.923000
+2013-06-18 18:36:09,739 - INFO: Thread #1, command: OpenProjectAndLogin, status: oK
+2013-06-18 18:36:09,836 - INFO: Thread #1, Screenshot created: c:\work\projects\_backup\GUItests/reports/screens/18_06_2013_18_36_07_Thread_1/18_06_2013_18_36_09_Thread_1_command_OpenProjectAndLogin_status_oK.png
+2013-06-18 18:36:09,838 - INFO: Thread #1, command: VerifyPageContainsSomeElements, start time: 18:36:09 18.06.2013
+2013-06-18 18:36:09,994 - INFO: Thread #1, Screenshot created: c:\work\projects\_backup\GUItests/reports/screens/18_06_2013_18_36_07_Thread_1/18_06_2013_18_36_09_Thread_1_command_VerifyPageContainsSomeElements_status_oK.png
+2013-06-18 18:36:09,994 - INFO: Thread #1, TestCase1, finish time: 18:36:09 18.06.2013
+2013-06-18 18:36:09,996 - INFO: Thread #1, TestCase1, duration: 0:00:01.180000
+2013-06-18 18:36:09,996 - INFO: Thread #1, TestCase1, status: PASS
+2013-06-18 18:36:09,996 - INFO: Thread #1, TestCase2, start time: 18:36:09 18.06.2013
+2013-06-18 18:36:09,996 - INFO: Thread #1, command: OpenProjectAndLogin - go to project's URL: https://google.ru
+2013-06-18 18:36:09,996 - INFO: Thread #1, command: OpenProjectAndLogin, start time: 18:36:09 18.06.2013
+2013-06-18 18:36:10,242 - INFO: Thread #1, command: OpenProjectAndLogin, probably you are log in already.
+2013-06-18 18:36:10,243 - INFO: Thread #1, command: OpenProjectAndLogin, finish time: 18:36:10 18.06.2013
+2013-06-18 18:36:10,243 - INFO: Thread #1, command: OpenProjectAndLogin, duration: 0:00:00.247000
+2013-06-18 18:36:10,243 - INFO: Thread #1, command: OpenProjectAndLogin, status: oK
+2013-06-18 18:36:10,395 - INFO: Thread #1, Screenshot created: c:\work\projects\_backup\GUItests/reports/screens/18_06_2013_18_36_07_Thread_1/18_06_2013_18_36_10_Thread_1_command_OpenProjectAndLogin_status_oK.png
+2013-06-18 18:36:10,395 - INFO: Thread #1, command: CheckSearchPage, start time: 18:36:10 18.06.2013
+2013-06-18 18:36:11,201 - INFO: Thread #1, command: CheckSearchPage, finish time: 18:36:11 18.06.2013
+2013-06-18 18:36:11,201 - INFO: Thread #1, command: CheckSearchPage, duration: 0:00:00.806000
+2013-06-18 18:36:11,201 - INFO: Thread #1, command: CheckSearchPage, status: oK
+2013-06-18 18:36:11,362 - INFO: Thread #1, Screenshot created: c:\work\projects\_backup\GUItests/reports/screens/18_06_2013_18_36_07_Thread_1/18_06_2013_18_36_11_Thread_1_command_CheckSearchPage_status_oK.png
+2013-06-18 18:36:11,362 - INFO: Thread #1, TestCase2, finish time: 18:36:11 18.06.2013
+2013-06-18 18:36:11,364 - INFO: Thread #1, TestCase2, duration: 0:00:01.367000
+2013-06-18 18:36:11,364 - INFO: Thread #1, TestCase2, status: PASS
+2013-06-18 18:36:11,364 - INFO: Thread #1, TestCase1, start time: 18:36:11 18.06.2013
+2013-06-18 18:36:11,364 - INFO: Thread #1, command: OpenProjectAndLogin - go to project's URL: https://google.ru
+2013-06-18 18:36:11,364 - INFO: Thread #1, command: OpenProjectAndLogin, start time: 18:36:11 18.06.2013
+2013-06-18 18:36:11,614 - INFO: Thread #1, command: OpenProjectAndLogin, probably you are log in already.
+2013-06-18 18:36:11,618 - INFO: Thread #1, command: OpenProjectAndLogin, finish time: 18:36:11 18.06.2013
+2013-06-18 18:36:11,618 - INFO: Thread #1, command: OpenProjectAndLogin, duration: 0:00:00.255000
+2013-06-18 18:36:11,618 - INFO: Thread #1, command: OpenProjectAndLogin, status: oK
+2013-06-18 18:36:11,740 - INFO: Thread #1, Screenshot created: c:\work\projects\_backup\GUItests/reports/screens/18_06_2013_18_36_07_Thread_1/18_06_2013_18_36_11_Thread_1_command_OpenProjectAndLogin_status_oK.png
+2013-06-18 18:36:11,740 - INFO: Thread #1, command: VerifyPageContainsSomeElements, start time: 18:36:11 18.06.2013
+2013-06-18 18:36:11,950 - INFO: Thread #1, Screenshot created: c:\work\projects\_backup\GUItests/reports/screens/18_06_2013_18_36_07_Thread_1/18_06_2013_18_36_11_Thread_1_command_VerifyPageContainsSomeElements_status_oK.png
+2013-06-18 18:36:11,954 - INFO: Thread #1, TestCase1, finish time: 18:36:11 18.06.2013
+2013-06-18 18:36:11,960 - INFO: Thread #1, TestCase1, duration: 0:00:00.591000
+2013-06-18 18:36:11,964 - INFO: Thread #1, TestCase1, status: PASS
+2013-06-18 18:36:11,964 - INFO: Thread #1, TestCase2, start time: 18:36:11 18.06.2013
+2013-06-18 18:36:11,964 - INFO: Thread #1, command: OpenProjectAndLogin - go to project's URL: https://google.ru
+2013-06-18 18:36:11,964 - INFO: Thread #1, command: OpenProjectAndLogin, start time: 18:36:11 18.06.2013
+2013-06-18 18:36:12,184 - INFO: Thread #1, command: OpenProjectAndLogin, probably you are log in already.
+2013-06-18 18:36:12,184 - INFO: Thread #1, command: OpenProjectAndLogin, finish time: 18:36:12 18.06.2013
+2013-06-18 18:36:12,184 - INFO: Thread #1, command: OpenProjectAndLogin, duration: 0:00:00.219000
+2013-06-18 18:36:12,184 - INFO: Thread #1, command: OpenProjectAndLogin, status: oK
+2013-06-18 18:36:12,309 - INFO: Thread #1, Screenshot created: c:\work\projects\_backup\GUItests/reports/screens/18_06_2013_18_36_07_Thread_1/18_06_2013_18_36_12_Thread_1_command_OpenProjectAndLogin_status_oK.png
+2013-06-18 18:36:12,309 - INFO: Thread #1, command: CheckSearchPage, start time: 18:36:12 18.06.2013
+2013-06-18 18:36:13,180 - INFO: Thread #1, command: CheckSearchPage, finish time: 18:36:13 18.06.2013
+2013-06-18 18:36:13,180 - INFO: Thread #1, command: CheckSearchPage, duration: 0:00:00.871000
+2013-06-18 18:36:13,180 - INFO: Thread #1, command: CheckSearchPage, status: oK
+2013-06-18 18:36:13,348 - INFO: Thread #1, Screenshot created: c:\work\projects\_backup\GUItests/reports/screens/18_06_2013_18_36_07_Thread_1/18_06_2013_18_36_13_Thread_1_command_CheckSearchPage_status_oK.png
+2013-06-18 18:36:13,352 - INFO: Thread #1, TestCase2, finish time: 18:36:13 18.06.2013
+2013-06-18 18:36:13,358 - INFO: Thread #1, TestCase2, duration: 0:00:01.388000
+2013-06-18 18:36:13,358 - INFO: Thread #1, TestCase2, status: PASS
+2013-06-18 18:36:13,358 - INFO: Thread #1, test-suite status: PASS
+2013-06-18 18:36:13,358 - INFO: Thread #1, test-suite finish time: 18:36:13 18.06.2013
+2013-06-18 18:36:13,358 - INFO: Thread #1, test-suite duration: 0:00:05.908000
+2013-06-18 18:36:13,358 - INFO: Thread #1, Trying to publish output results of test-suite in summary file: c:\work\projects\_backup\GUItests/reports/Test_suite_Summary.txt
+2013-06-18 18:36:13,368 - INFO: Thread #1, Publish summary file, status: oK
+2013-06-18 18:36:13,368 - INFO: Thread #1, command: CloseBrowser, start time: 18:36:13 18.06.2013
+2013-06-18 18:36:13,368 - INFO: Thread #1, command: CloseBrowser
+2013-06-18 18:36:13,614 - INFO: Thread #1, Screenshot created: c:\work\projects\_backup\GUItests/reports/screens/18_06_2013_18_36_07_Thread_1/18_06_2013_18_36_13_Thread_1_command_CloseBrowser_status_oK.png
+2013-06-18 18:36:13,865 - INFO: Thread #1, command: CloseBrowser, status: oK

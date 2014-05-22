@@ -1,0 +1,2 @@
+Thread;timeStart;timeStop;duration;testStatus;all_exceptions;TimeoutException;NoSuchElementException
+2;2013-06-18 18:36:09.452000;2013-06-18 18:36:15.503000;0:00:06.051000;PASS;0;0;0

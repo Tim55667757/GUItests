@@ -1,0 +1,38 @@
+  --- Summary Report for Test-suite by threads ---
+Report date and time: 18:36:15 18.06.2013 
+Options for all threads:
+    - case sequence in test-suite: [1, 2, 1, 2]
+    - project's URL: https://google.ru
+    - browser string: *chrome
+    - operation's timeout (sec.): 10
+    - threads of test suite: 3
+    - rump up period (sec.): 6
+    - take screens on error: True
+    - take screens on steps: True
+Thread #0
+    last timeStart: 2013-06-18 18:36:05.450000
+    last timeStop: 2013-06-18 18:36:10.234000
+    last duration: 0:00:04.784000
+    last testStatus: PASS
+    Summary exception's statistic for thread #0:
+        all: 0
+        TimeoutException: 0
+        NoSuchElementException: 0
+Thread #1
+    last timeStart: 2013-06-18 18:36:07.450000
+    last timeStop: 2013-06-18 18:36:13.358000
+    last duration: 0:00:05.908000
+    last testStatus: PASS
+    Summary exception's statistic for thread #1:
+        all: 0
+        TimeoutException: 0
+        NoSuchElementException: 0
+Thread #2
+    last timeStart: 2013-06-18 18:36:09.452000
+    last timeStop: 2013-06-18 18:36:15.503000
+    last duration: 0:00:06.051000
+    last testStatus: PASS
+    Summary exception's statistic for thread #2:
+        all: 0
+        TimeoutException: 0
+        NoSuchElementException: 0
